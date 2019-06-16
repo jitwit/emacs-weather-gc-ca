@@ -6,14 +6,14 @@
 (defgroup weather-gc-ca nil
   "Get weather from rss feeds provided at https://weather.gc.ca"
   :prefix "weather-gc-ca-"
-  :group 'apps
-  )
+  :group 'Applications)
 
-(defconst *weather-gc-ca-uri*
-  "https://weather.gc.ca/rss/city/qc-147_e.xml")
+(defcustom *weather-gc-ca-uri*
+  "https://weather.gc.ca/rss/city/qc-147_e.xml"
+  "weather.gc.ca rss uri for weather forecasts. default is for montreal.")
 (defvar *weather-gc-ca-feed* nil)
 (defvar *weather-gc-ca-current-conditions* nil)
-(defvar *weather-gc-ca-last-updated*)
+(defvar *weather-gc-ca-last-updated* nil)
 
 (defun weather-gc-ca-update ()
   "read the rss feed for montreal from weather-gc-ca"
@@ -28,28 +28,25 @@
 			     (xml-get-children parsed-xml 'entry))))
 	   (current-conditions (cadr (split-string (caddr (cadr entries)) ": "))))
       (setq *weather-gc-ca-feed* parsed-xml
-	    *weather-gc-ca-current-conditions* current-conditions))))
-
-(defun weather-gc-ca-clear-mode-line-misc-info ()
-  "Clear misc info from mode line"
-  (setq mode-line-misc-info '()))
+	    *weather-gc-ca-current-conditions* current-conditions
+	    *weather-gc-ca-last-updated* (current-time)))))
 
 (defun weather-gc-ca-put-mode-line-misc-info ()
-  "Write contents of current conditions variable to mode line buffer"
-  (add-to-list 'mode-line-misc-info
-	       (format "(%s)" *weather-gc-ca-current-conditions*)
-	       t))
+  "Write contents of current conditions variable to mode line buffer.
+   This will overwrite any info in the misc info variable."
+  (setq mode-line-misc-info
+	`(,(format "{%s}" *weather-gc-ca-current-conditions*))))
 
-(define-minor-mode weather-gc-ca-mode-line
-  "Display current conditions in mode-line"
-  :global t
-  :group 'weather-gc-ca
-  (unless *weather-gc-ca-current-conditions*
-    (weather-gc-ca-update))
-  (weather-gc-ca-clear-mode-line-misc-info)
-  (weather-gc-ca-put-mode-line-misc-info))
+(defvar *weather-gc-ca-timer*
+  (run-at-time (current-time) 900
+	       (lambda ()
+		 (weather-gc-ca-update)
+		 (weather-gc-ca-put-mode-line-misc-info))))
 
-(provide 'weather-gc-ca-mode-line)
+(defun weather-gc-ca-cancel ()
+  (setq mode-line-misc-info '())
+  (cancel-timer *weather-gc-ca-timer*))
+
 (provide 'weather-gc-ca)
 
 
