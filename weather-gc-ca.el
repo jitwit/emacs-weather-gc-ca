@@ -30,18 +30,26 @@
       (setq *weather-gc-ca-feed* parsed-xml
 	    *weather-gc-ca-current-conditions* current-conditions))))
 
+(defun weather-gc-ca-clear-mode-line-misc-info ()
+  "Clear misc info from mode line"
+  (setq mode-line-misc-info '()))
+
+(defun weather-gc-ca-put-mode-line-misc-info ()
+  "Write contents of current conditions variable to mode line buffer"
+  (add-to-list 'mode-line-misc-info
+	       (format "(%s)" *weather-gc-ca-current-conditions*)
+	       t))
+
 (define-minor-mode weather-gc-ca-mode-line
   "Display current conditions in mode-line"
   :global t
   :group 'weather-gc-ca
   (unless *weather-gc-ca-current-conditions*
     (weather-gc-ca-update))
-  (add-to-list 'mode-line-misc-info
-	       (format "{%s}" *weather-gc-ca-current-conditions*)
-	       t))
+  (weather-gc-ca-clear-mode-line-misc-info)
+  (weather-gc-ca-put-mode-line-misc-info))
 
-(provide 'weather-gc-ca)
 (provide 'weather-gc-ca-mode-line)
-
+(provide 'weather-gc-ca)
 
 
