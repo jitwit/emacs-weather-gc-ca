@@ -22,17 +22,6 @@
 (defvar *weather-gc-ca-timer* nil
   "Object responsible for updating feed every 1800 seconds")
 
-(seq-find
- (lambda (s) (string-prefix-p "Curr" (car s)))
- (seq--into-list
-  (mapcar (lambda (e)
-	    (let ((cs (xml-get-children e 'title)))
-	      (if (and (listp cs)
-		       (> (length cs) 0))
-		  (cddar cs)
-		'())))
-	  (xml-get-children *weather-gc-ca-feed* 'entry))))
-(weather-gc-ca-update)
 (defun weather-gc-ca-update ()
   "read the rss feed for montreal from weather-gc-ca"
   (with-current-buffer (url-retrieve-synchronously *weather-gc-ca-uri*)
@@ -40,18 +29,16 @@
 	   (entries (seq--into-list
 		     (mapcar (lambda (e)
 			       (let ((cs (xml-get-children e 'title)))
-				 (if (and (listp cs) (> (length cs) 0))
+				 (if (and (listp cs)
+					  (> (length cs) 0))
 				     (cddar cs)
 				   '())))
-			     (xml-get-children parsed-xml 'entry))))
-	   ;; this works for mtl, doesn't seem to for vancouver...
-	   ;; i should rewrite this to actually look for prefix "Current Conditions:"
+			     (xml-get-children *weather-gc-ca-feed* 'entry))))
 	   (current-conditions
-	    (cadr (split-string (car
-				 (seq-find (lambda (entry)
-					     (string-prefix-p "Current Conditions:" entry))
-					   entries))
-				": "))))
+	    (cadr
+	     (split-string (car (seq-find (lambda (s) (string-prefix-p "Current" (car s)))
+					  entries))
+			   ": "))))
       (setq *weather-gc-ca-feed* parsed-xml
 	    *weather-gc-ca-current-conditions* current-conditions
 	    *weather-gc-ca-last-updated* (current-time)))))
@@ -83,5 +70,7 @@
   (weather-gc-ca-init))
 
 (provide 'weather-gc-ca)
+;;(weather-gc-ca-update)
+;;( weather-gc-ca-put-mode-line-misc-info)
 
 
