@@ -30,15 +30,17 @@
 		     (mapcar (lambda (e)
 			       (let ((cs (xml-get-children e 'title)))
 				 (if (and (listp cs)
-					  (> (length cs) 0))
-				     (cddar cs)
+					  (> (length cs) 0)
+					  (> (length (car cs)) 2))
+				     (caddar cs)
 				   '())))
-			     (xml-get-children *weather-gc-ca-feed* 'entry))))
-	   (current-conditions
-	    (cadr
-	     (split-string (car (seq-find (lambda (s) (string-prefix-p "Current" (car s)))
-					  entries))
-			   ": "))))
+			     (xml-get-children parsed-xml 'entry))))
+	   (current-conditions (cadr
+				(split-string
+				 (seq-find (lambda (s)
+					     (string-prefix-p "Current Conditions" s))
+					   entries)
+				 ": "))))
       (setq *weather-gc-ca-feed* parsed-xml
 	    *weather-gc-ca-current-conditions* current-conditions
 	    *weather-gc-ca-last-updated* (current-time)))))
@@ -69,8 +71,13 @@
   (setq *weather-gc-ca-uri* uri)
   (weather-gc-ca-init))
 
-(provide 'weather-gc-ca)
+;;(weather-gc-ca-new-uri "https://weather.gc.ca/rss/city/qc-133_e.xml")
+;;(weather-gc-ca-new-uri "https://weather.gc.ca/rss/city/bc-74_e.xml")
+;;(weather-gc-ca-new-uri "https://weather.gc.ca/rss/city/qc-147_e.xml")
 ;;(weather-gc-ca-update)
-;;( weather-gc-ca-put-mode-line-misc-info)
+;;(weather-gc-ca-put-mode-line-misc-info)
+
+(provide 'weather-gc-ca)
+
 
 
