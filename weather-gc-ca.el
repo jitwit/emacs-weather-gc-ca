@@ -11,8 +11,15 @@
   "https://weather.gc.ca/rss/city/qc-147_e.xml"
   "weather.gc.ca rss uri for weather forecasts. default is for montreal.")
 
-;; TODO: add startup buffers showing today's jet_stream
-;; "https://weather.gc.ca/data/jet_stream/tempmapwx_e.gif"
+(defcustom *weather-gc-ca-dir*
+  "~/.emacs.d/weather"
+  "storage directory for saving files/forecasts")
+
+(defvar *weather-gc-ca-jet-stream-uri*
+  "https://weather.gc.ca/data/jet_stream/tempmapwx_e.gif"
+  "uri for today's jetstream image")
+(defvar *weather-gc-ca* nil
+  "Buffer for viewing weather.gc.ca related things")
 (defvar *weather-gc-ca-feed* nil
   "Raw dump of http response from weather.gc.ca")
 (defvar *weather-gc-ca-current-conditions* nil
@@ -24,6 +31,7 @@
 
 (defun weather-gc-ca-update ()
   "read the rss feed for montreal from weather-gc-ca"
+  (interactive)
   (with-current-buffer (url-retrieve-synchronously *weather-gc-ca-uri*)
     (let* ((parsed-xml (car (xml-parse-region (point-min) (point-max))))
 	   (entries (seq--into-list
@@ -70,6 +78,18 @@
 (defun weather-gc-ca-new-uri (uri)
   (setq *weather-gc-ca-uri* uri)
   (weather-gc-ca-init))
+
+(defun weather-gc-ca-fetch-jet ()
+  (interactive)
+  (let ((jetfile (format "%s/jetstream.gif" *weather-gc-ca-dir*)))
+    (shell-command (format "wget %s -O %s"
+			   *weather-gc-ca-jet-stream-uri*
+			   jetfile))
+    (find-file jetfile)))
+
+(defun weather-gc-ca-view-jet ()
+  (interactive)
+  (find-file (format "%s/jetstream.gif" *weather-gc-ca-dir*)))
 
 ;;(weather-gc-ca-new-uri "https://weather.gc.ca/rss/city/qc-133_e.xml")
 ;;(weather-gc-ca-new-uri "https://weather.gc.ca/rss/city/bc-74_e.xml")
